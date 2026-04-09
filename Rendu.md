@@ -127,7 +127,7 @@ Temps d'execution : environ **1min04**. 1 093 361 lignes traitees, 45 252 films 
 
 Ce qui saute aux yeux : le film 1 (Toy Story) a 697 tags, alors que la plupart des films en ont moins de 10. Les gros classiques concentrent une part enorme des tags. En moyenne c'est ~24 tags par film (1 093 360 / 45 252), mais la mediane est surement bien plus basse vu la distribution.
 
-Resultats complets : [Lien GitHub](TODO)
+Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
 
 ---
 
@@ -203,7 +203,7 @@ Temps d'execution : environ **1min08**. 14 593 utilisateurs distincts. Extrait :
 
 Meme constat que pour les films : c'est tres desequilibre. La moyenne est de ~75 tags par utilisateur (1 093 360 / 14 593), mais la plupart en ont pose moins de 10. Quelques utilisateurs tres actifs (genre 684 tags pour l'un d'entre eux) tirent la moyenne vers le haut. C'est une distribution typique "longue traine" qu'on retrouve souvent dans les donnees de tagging collaboratif.
 
-Resultats complets : [Lien GitHub](TODO)
+Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
 
 ---
 
@@ -332,7 +332,7 @@ Temps d'execution : environ **1min06**. 65 372 tags distincts sur 1 093 360 lign
 
 C'est assez parlant : la grande majorite des tags n'apparaissent qu'une seule fois (des hapax). On voit aussi des hashtags, des phrases entieres utilisees comme tags, des fautes de frappe... Le dataset est tres "bruité" parce que les tags sont du texte libre saisi par les utilisateurs, sans aucune contrainte. Ca explique pourquoi on a 65 000 tags differents pour seulement 1M de lignes : le ratio tags uniques / total est de ~6%, ce qui est tres eleve.
 
-Resultats complets : [Lien GitHub](TODO)
+Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
 
 ---
 
@@ -386,7 +386,7 @@ L'utilisateur 6550 revient souvent, c'est probablement un des gros tagueurs du d
 
 En croisant avec Q2 : les 14 593 utilisateurs se repartissent sur 305 356 couples film/user, soit en moyenne ~21 films tagges par utilisateur. Mais la encore, la distribution est probablement tres asymetrique.
 
-Resultats complets : [Lien GitHub](TODO)
+Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
 
 ---
 
