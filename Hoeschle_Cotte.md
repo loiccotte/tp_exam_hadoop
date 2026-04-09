@@ -1,8 +1,8 @@
 # TP Hadoop MapReduce - tags.csv (MovieLens 25M)
-
+Github : [Lien](https://github.com/loiccotte/tp_exam_hadoop)
 ## Le fichier
 
-On bosse sur `ml-25m/tags.csv`, environ 38 Mo. C'est un CSV classique :
+On bosse sur `ml-25m/tags.csv`, le fichier fait 38Mo. (Précision : Le fichier était d'ores et déjà importé suite au précédent TP.)
 
 ```
 userId,movieId,tag,timestamp
@@ -11,9 +11,9 @@ userId,movieId,tag,timestamp
 4,1732,dark comedy,1573943598
 ```
 
-Quatre colonnes separees par des virgules, avec un header en premiere ligne. Le header ne fait pas planter le `split` (il a bien 4 champs), du coup il faut le filtrer a la main dans les mappers.
+Quatre colonnes separees par des virgules, avec un header en premiere ligne. Le header ne fait pas planter le `split` (il a bien 4 champs), il faudra le filtrer plus tard dans les mappers.
 
-Un truc qu'on a remarque en testant : certains tags contiennent des virgules (genre "dark, brooding"). On utilise `split(',', 3)` qui coupe en 4 morceaux max, donc le tag recupere tout ce qui reste apres movieId. Ca marche dans la majorite des cas. On aurait pu utiliser `csv.reader` pour etre plus propre, mais on a prefere rester sur l'approche du cours.
+Un truc qu'on a remarque en testant : certains tags contiennent des virgules (ex : "dark, brooding"). On utilise `split(',', 3)` qui coupe en 4 morceaux max, donc le tag recupere tout ce qui reste apres movieId. Ca marche dans la majorite des cas. On aurait pu utiliser `csv.reader` pour etre plus propre, mais on est resté sur l'approche du cours.
 
 ## Environnement
 
@@ -21,7 +21,7 @@ VM Hortonworks HDP Sandbox sur RedHat. On se connecte en SSH : `ssh maria_dev@lo
 
 ## Preparation
 
-Premier reflexe : se faire un petit echantillon avant de lancer sur les 38 Mo. On a fait le test sans au debut et on attendait 3-4 minutes a chaque run pour debugger une typo, c'etait penible.
+Premier reflexe : Comme dit dans l'énoncé, on réalise un échantillon pour tester le code
 
 ```bash
 hdfs dfs -cat ml-25m/tags.csv | head -100 > tags_sample.csv
@@ -36,7 +36,7 @@ Ca nous donne 99 lignes de donnees (+ le header) pour iterer vite.
 
 ### Q1 : Combien de tags par film ?
 
-L'idee est simple : le mapper sort `(movieId, 1)` pour chaque ligne, le reducer additionne. On a ajoute un `if` pour virer le header (au debut on l'avait pas et le header comptait comme un film, on s'en est rendu compte en voyant "movieId" dans les resultats).
+L'idee est simple : le mapper renvoie `(movieId, 1)` pour chaque ligne, le reducer aggrège. On a ajoute un `if` pour virer le header (au debut on l'avait pas et le header comptait comme un film, on s'en est rendu compte en voyant "movieId" dans les resultats).
 
 ```python
 # tags_par_film.py
@@ -99,7 +99,6 @@ Resultat sur l'echantillon (99 lignes, 27 films) :
 "79132"         1
 ```
 
-Ca a l'air correct. Au passage, dans notre premiere version du script on n'avait pas le filtre `if userID == 'userId'`, et on se retrouvait avec une ligne `"movieId" 1` dans les resultats. On a mis un moment a comprendre d'ou ca venait avant de realiser que le header passait le `split` sans erreur. D'ou le filtre explicite.
 
 On lance sur le fichier complet :
 
@@ -110,7 +109,7 @@ python tags_par_film.py -r hadoop \
     -o hdfs:///user/maria_dev/output_tags_film
 ```
 
-Temps d'execution : environ **1min04**. 1 093 361 lignes traitees, 45 252 films distincts. Extrait :
+Temps d'execution : environ 1min04. 1 093 361 lignes traitees, 45 252 films distincts. Extrait :
 
 ```
 "1"         697
@@ -127,7 +126,7 @@ Temps d'execution : environ **1min04**. 1 093 361 lignes traitees, 45 252 films 
 
 Ce qui saute aux yeux : le film 1 (Toy Story) a 697 tags, alors que la plupart des films en ont moins de 10. Les gros classiques concentrent une part enorme des tags. En moyenne c'est ~24 tags par film (1 093 360 / 45 252), mais la mediane est surement bien plus basse vu la distribution.
 
-Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
+Resultats complets Q1 : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop/blob/main/Q1_tags_par_film.txt)
 
 ---
 
@@ -186,7 +185,7 @@ python tags_par_user.py -r hadoop \
     -o hdfs:///user/maria_dev/output_tags_user
 ```
 
-Temps d'execution : environ **1min08**. 14 593 utilisateurs distincts. Extrait :
+Temps d'execution : environ 1min08. 14 593 utilisateurs distincts. Extrait :
 
 ```
 "100001"        9
@@ -201,9 +200,9 @@ Temps d'execution : environ **1min08**. 14 593 utilisateurs distincts. Extrait :
 "100068"        19
 ```
 
-Meme constat que pour les films : c'est tres desequilibre. La moyenne est de ~75 tags par utilisateur (1 093 360 / 14 593), mais la plupart en ont pose moins de 10. Quelques utilisateurs tres actifs (genre 684 tags pour l'un d'entre eux) tirent la moyenne vers le haut. C'est une distribution typique "longue traine" qu'on retrouve souvent dans les donnees de tagging collaboratif.
+Meme constat que pour les films : c'est tres desequilibre. La moyenne est de ~75 tags par utilisateur (1 093 360 / 14 593), mais la plupart en ont pose moins de 10. Quelques utilisateurs tres actifs (684 tags pour l'un d'entre eux) tirent la moyenne vers le haut.
 
-Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
+Resultats complets Q2 : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop/blob/main/Q2_tags_par_user.txt)
 
 ---
 
@@ -246,7 +245,7 @@ Config 64 Mo :
 Total blocks (validated):      1 (avg. block size 38810332 B)
 ```
 
-**1 bloc dans les deux cas.** 38 810 332 octets (~37 Mo), en dessous des deux seuils. Le nombre de mappers lances sera aussi identique (1 mapper = 1 bloc), donc aucun gain de parallelisme dans notre cas.
+On a donc bien 1 bloc dans les deux cas.(~37 Mo), en dessous des deux seuils. Le nombre de mappers lances sera aussi identique (1 mapper = 1 bloc), donc aucun gain de parallelisme dans notre cas.
 
 Pour illustrer ce que ca donnerait sur un fichier plus gros, on a fait le test avec `ratings.csv` (678 Mo) :
 
@@ -286,7 +285,7 @@ La c'est parlant : avec des blocs de 64 Mo, Hadoop pourrait lancer 11 mappers en
 
 ### Q4 : Combien de fois chaque tag a ete utilise ?
 
-On compte les occurrences de chaque tag. On normalise en minuscules avec `.lower()` parce que sinon "sci-fi", "Sci-Fi" et "Sci-fi" comptent comme 3 tags differents. C'est un choix : on perd la casse originale, mais on gagne en coherence. On fait aussi un `.strip()` pour virer les espaces en trop.
+On compte les occurrences de chaque tag. On normalise en minuscules avec `.lower()` parce que sinon "sci-fi", "Sci-Fi" et "Sci-fi" comptent comme 3 tags differents. C'est un choix : on perd la casse originale, mais on gagne en coherence. On fait aussi un `.strip()` pour supprimer les espaces en trop.
 
 ```python
 # frequence_tags.py
@@ -318,7 +317,7 @@ python frequence_tags.py -r hadoop \
     -o hdfs:///user/maria_dev/output_frequence_tags
 ```
 
-Temps d'execution : environ **1min06**. 65 372 tags distincts sur 1 093 360 lignes de donnees (le header a bien ete filtre, on a verifie). Extrait :
+Temps d'execution : environ 1min06. 65 372 tags distincts sur 1 093 360 lignes de donnees. Extrait :
 
 ```
 "#1 prediction"                                  3
@@ -330,15 +329,15 @@ Temps d'execution : environ **1min06**. 65 372 tags distincts sur 1 093 360 lign
 "#wtf"                                           1
 ```
 
-C'est assez parlant : la grande majorite des tags n'apparaissent qu'une seule fois (des hapax). On voit aussi des hashtags, des phrases entieres utilisees comme tags, des fautes de frappe... Le dataset est tres "bruité" parce que les tags sont du texte libre saisi par les utilisateurs, sans aucune contrainte. Ca explique pourquoi on a 65 000 tags differents pour seulement 1M de lignes : le ratio tags uniques / total est de ~6%, ce qui est tres eleve.
+C'est assez parlant : la grande majorite des tags n'apparaissent qu'une seule fois. On voit aussi des hashtags, des phrases entieres utilisees comme tags, des fautes de frappe... Le dataset est tres "bruité" parce que les tags sont du texte libre saisi par les utilisateurs, sans aucune contrainte. Ca explique pourquoi on a 65 000 tags differents pour seulement 1M de lignes : le ratio tags uniques / total est de ~6%, ce qui est tres eleve.
 
-Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
+Resultats complets Q4 : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop/blob/main/Q4_frequence_tags.txt)
 
 ---
 
 ### Q5 : Pour chaque film, combien de tags par utilisateur ?
 
-La il faut grouper par couple (movieId, userId). Le probleme c'est que MRJob veut une cle string. On a essaye avec un tuple au debut, mais MRJob le serialise en liste JSON de toute facon, donc autant le faire nous-memes avec `json.dumps`. Le tri est lexicographique sur la string, ca groupe bien par film puis par utilisateur.
+La il faut grouper par couple (movieId, userId). Le probleme c'est que MRJob veut une cle string. On a essaye avec un tuple au debut, mais MRJob le serialise en liste JSON de toute facon, donc autant le faire nous-memes avec `json.dumps`. Le tri est alphabétique sur la string, ca groupe bien par film puis par utilisateur.
 
 ```python
 # tags_user_film.py
@@ -369,7 +368,7 @@ python tags_user_film.py -r hadoop \
     -o hdfs:///user/maria_dev/output_tags_user_film
 ```
 
-Temps d'execution : environ **1min17** (le plus long, a cause de la cle composite JSON plus lourde a trier). 305 356 couples (film, utilisateur) distincts. Extrait :
+Temps d'execution : environ 1min17. 305 356 couples (film, utilisateur) distincts. Extrait :
 
 ```
 ["100003", "6550"]        2
@@ -382,11 +381,11 @@ Temps d'execution : environ **1min17** (le plus long, a cause de la cle composit
 ["100044", "58039"]       4
 ```
 
-L'utilisateur 6550 revient souvent, c'est probablement un des gros tagueurs du dataset. La plupart des couples ont 1 ou 2 tags. 9 tags d'un meme utilisateur sur un meme film (utilisateur 14116 sur le film 100034), ca fait beaucoup, cette personne avait visiblement des choses a dire.
+L'utilisateur 6550 revient souvent, c'est probablement un des gros tagueurs du dataset. La plupart des couples ont 1 ou 2 tags. 9 tags d'un meme utilisateur sur un meme film (utilisateur 14116 sur le film 100034).
 
 En croisant avec Q2 : les 14 593 utilisateurs se repartissent sur 305 356 couples film/user, soit en moyenne ~21 films tagges par utilisateur. Mais la encore, la distribution est probablement tres asymetrique.
 
-Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
+Resultats complets Q5 : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop/blob/main/Q5_tags_user_film.txt)
 
 ---
 
@@ -394,6 +393,6 @@ Resultats complets : [Lien GitHub](https://github.com/loiccotte/tp_exam_hadoop)
 
 Quelques observations en recoupant les resultats :
 
-- **Distribution desequilibree partout** : que ce soit les tags par film, par utilisateur, ou la frequence des tags, on a toujours une minorite qui concentre l'essentiel de l'activite. C'est coherent avec la loi de Zipf / le principe de Pareto qu'on retrouve dans beaucoup de donnees generees par des utilisateurs.
-- **Limites du MapReduce ici** : pour un fichier de 38 Mo qui tient en 1 bloc, Hadoop n'apporte pas grand chose par rapport a un simple `awk` ou `pandas`. L'interet serait sur un fichier beaucoup plus gros ou le parallelisme sur plusieurs blocs / noeuds ferait la difference.
-- **Qualite des tags** : le fait d'avoir 65 000 tags uniques pour 1M de lignes montre que le tagging libre sans vocabulaire controle genere enormement de bruit. Un systeme de suggestions ou d'autocompletion reduirait ca.
+- **Distribution desequilibree partout** : que ce soit les tags par film, par utilisateur, ou la frequence des tags, on a toujours une minorite qui concentre l'essentiel de l'activite. C'est coherent le principe de Pareto qu'on retrouve dans beaucoup de donnees generees par des utilisateurs.
+- **Limites du MapReduce ici** : pour un fichier de 38 Mo qui tient en 1 bloc, Hadoop n'apporte pas grand chose par rapport a un simple `polars` ou `pandas`. L'interet serait sur un fichier beaucoup plus gros ou le parallelisme sur plusieurs blocs / noeuds ferait la difference.
+- **Qualite des tags** : le fait d'avoir 65 000 tags uniques pour 1M de lignes montre que le tagging libre sans vocabulaire controle genere enormement de bruit. Un systeme de suggestions ou d'autocompletion reduirait ça.
